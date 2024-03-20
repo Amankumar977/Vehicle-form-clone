@@ -23,7 +23,7 @@ app.use(morgan("tiny"));
 // Middleware for enabling CORS with specific configuration
 app.use(
   cors({
-    origin: [process.env.FRONT_END_URL], // Allowing requests only from the specified front-end URL
+    origin: ["http://localhost:5173"], // Allowing requests only from the specified front-end URL
     secure: true, // Enforcing secure connections
     httpOnly: true, // Restricting access to cookies to HTTP requests only
   })
@@ -36,7 +36,7 @@ app.get("/", (req, res) => {
 });
 
 // Mounting the order routes at the specified endpoint
-app.use("api/v1/order", orderRoute);
+app.use("/api/v1/order", orderRoute);
 
 // Exporting the configured Express application
 export default app;
