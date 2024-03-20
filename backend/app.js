@@ -23,7 +23,7 @@ app.use(morgan("tiny"));
 // Middleware for enabling CORS with specific configuration
 app.use(
   cors({
-    origin: ["http://localhost:5173"], // Allowing requests only from the specified front-end URL
+    origin: ["https://vehicle-form-clone-ydly.vercel.app"], // Allowing requests only from the specified front-end URL
     secure: true, // Enforcing secure connections
     httpOnly: true, // Restricting access to cookies to HTTP requests only
   })
