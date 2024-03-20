@@ -8,7 +8,6 @@ import { setStartDate, setEndDate } from "../store/reducers/orderData";
 const DatePicker = ({ page, setPage }) => {
   const [allOrders, setAllOrders] = useState([]);
   const [minEndDate, setMinEndDate] = useState(new Date());
-  const [availableDates, setAvailableDates] = useState([]);
   const { vehicleData } = useSelector((state) => state.vehicleData);
   const orderData = useSelector((state) => state.orderData);
   const { vehicleModel } = orderData;
@@ -55,14 +54,7 @@ const DatePicker = ({ page, setPage }) => {
     dispatch(setEndDate(data.endDate));
     dispatch(setStartDate(data.startDate));
 
-    if (
-      isDateAvailable(
-        allOrders,
-        data.startDate,
-        data.endDate,
-        setAvailableDates
-      )
-    ) {
+    if (isDateAvailable(allOrders, data.startDate, data.endDate)) {
       try {
         const response = await axios.put(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/order/updateVehicleDate`,
@@ -94,50 +86,7 @@ const DatePicker = ({ page, setPage }) => {
         toast.error("Error in creating the order. Please try again later.");
       }
     } else {
-      let start = new Date(data.startDate);
-      let end = new Date(data.endDate);
-
-      // Initialize an array to store the formatted dates
-      const formattedDates = [];
-
-      // Iterate over the properties of availableDates
-      for (let key in availableDates) {
-        if (Object.hasOwnProperty.call(availableDates, key)) {
-          const dateStart = new Date(availableDates[key].dateStart);
-          const dateEnd = new Date(availableDates[key].dateEnd);
-          const endDateofDateEnd = new Date(
-            availableDates[key].endDateofDateEnd
-          );
-
-          // Check if the current available date range overlaps with the selected date range
-          if (dateEnd.getTime() !== end.getTime()) {
-            const remainingEndDate = new Date(
-              end.getTime() - dateEnd.getTime()
-            );
-
-            // Push the formatted date strings into the array
-            formattedDates.push(
-              `${dateStart.toLocaleDateString()} to ${dateEnd.toLocaleDateString()}`
-            );
-            formattedDates.push(
-              `${endDateofDateEnd.toLocaleDateString()} to ${end.toLocaleDateString()}`
-            );
-          } else {
-            // Push the formatted date string for the non-overlapping available date range
-            formattedDates.push(
-              `${dateStart.toLocaleDateString()} to ${dateEnd.toLocaleDateString()}`
-            );
-          }
-        }
-      }
-
-      // Join the formatted dates into a single string
-      const formattedDatesString = formattedDates.join(", ");
-
-      // Display the toast message with the available dates
-      toast.error(
-        `We are sorry, selected dates are not available. The available dates are: ${formattedDatesString}`
-      );
+      toast.error(`We are sorry, selected dates are not available.`);
     }
   };
 
@@ -201,47 +150,29 @@ const DatePicker = ({ page, setPage }) => {
   );
 };
 // Function to check if dates are available for any vehicle
-let isDateAvailable = (allOrders, startDate, endDate, setAvailableDates) => {
-  if (allOrders.length <= 1) {
-    return true;
+const isDateAvailable = (allOrders, startDate, endDate) => {
+  if (allOrders.length === 0) {
+    return true; // If there are no existing orders, all dates are available
   }
-  let LastOrderEndDate = new Date(allOrders[0].endDate).getTime();
-  let LastOrderStartDate = new Date(allOrders[0].startDate).getTime();
 
-  let startDateTime = new Date(startDate).getTime();
-  let endDateTime = new Date(endDate).getTime();
-  if (startDateTime >= LastOrderStartDate && endDateTime >= LastOrderEndDate) {
-    return true;
-  }
-  let availableDates = [];
-  console.log(allOrders);
-  for (let i = 0; i < allOrders.length - 1; i++) {
-    let currentEndDate = new Date(allOrders[i].endDate).getTime();
-    let nextStartDate = new Date(allOrders[i + 1].startDate).getTime();
+  const startDateTime = new Date(startDate).getTime();
+  const endDateTime = new Date(endDate).getTime();
 
-    if (nextStartDate > currentEndDate) {
-      availableDates.push({
-        dateStart: allOrders[i].endDate,
-        dateEnd: allOrders[i + 1].startDate,
-        endDateofDateEnd: allOrders[i + 1].endDate,
-      });
-    }
-  }
-  for (let dates of availableDates) {
-    let currentStartDateTime = new Date(dates.dateStart).getTime();
-    let currentEndDateTime = new Date(dates.dateEnd).getTime();
+  for (const order of allOrders) {
+    const orderStart = new Date(order.startDate).getTime();
+    const orderEnd = new Date(order.endDate).getTime();
 
+    // Check if the selected dates overlap with any existing order
     if (
-      (startDateTime >= currentStartDateTime &&
-        endDateTime <= currentEndDateTime) ||
-      (startDateTime >= currentStartDateTime &&
-        endDateTime >= currentEndDateTime)
+      (startDateTime >= orderStart && startDateTime < orderEnd) ||
+      (endDateTime > orderStart && endDateTime <= orderEnd) ||
+      (startDateTime <= orderStart && endDateTime >= orderEnd)
     ) {
-      return true;
+      return false; // Dates are not available due to overlap with an existing order
     }
   }
-  setAvailableDates(availableDates);
-  return false;
+
+  return true; // No overlapping dates found, so the selected dates are available
 };
 
 export default DatePicker;
