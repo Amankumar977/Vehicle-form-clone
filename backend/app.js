@@ -36,7 +36,7 @@ app.get("/", (req, res) => {
 });
 
 // Mounting the order routes at the specified endpoint
-app.use("/api/v1/order", orderRoute);
+app.use("api/v1/order", orderRoute);
 
 // Exporting the configured Express application
 export default app;
